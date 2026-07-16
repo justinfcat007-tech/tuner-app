@@ -13,6 +13,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/yangqin',
+    name: 'YangqinTuner',
+    component: () => import('../views/YangqinTuner.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/vip',
     name: 'VIP',
     component: () => import('../views/VIPView.vue'),

@@ -68,6 +68,13 @@
       @select="selectedStringIndex = $event"
     />
 
+    <!-- 扬琴专属入口 -->
+    <div v-if="currentInstrument.id === 'yangqin'" class="yangqin-entry">
+      <router-link to="/yangqin" class="yangqin-btn">
+        🎶 打开扬琴调音器 (手动/自动模式 + 示意图)
+      </router-link>
+    </div>
+
     <footer class="footer">
       <p>基于 Web Audio API · 自动检测音高 · 支持标准调弦</p>
     </footer>
@@ -257,4 +264,21 @@ const isMatch = computed(() => {
 .volume-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); border-radius: 2px; transition: width 0.05s; }
 
 .footer { text-align: center; margin-top: 40px; padding: 20px; color: #475569; font-size: 12px; }
+
+.yangqin-entry {
+  text-align: center;
+  margin: 20px 0;
+}
+.yangqin-btn {
+  display: inline-block;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #8B6914, #a08030);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.yangqin-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(139, 105, 20, 0.4); }
 </style>
