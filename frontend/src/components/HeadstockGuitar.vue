@@ -1,5 +1,5 @@
 <template>
-  <svg viewBox="0 0 320 400" class="headstock-svg">
+  <svg viewBox="0 0 320 300" class="headstock-svg">
     <defs>
       <linearGradient id="woodG" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#C4A030"/>
@@ -32,46 +32,46 @@
     </defs>
 
     <!-- 琴颈 -->
-    <rect x="128" y="262" width="64" height="138" rx="2" fill="url(#neckG)"/>
+    <rect x="128" y="162" width="64" height="138" rx="2" fill="url(#neckG)"/>
     <!-- 品丝 -->
-    <line x1="128" y1="288" x2="192" y2="288" stroke="url(#fretG)" stroke-width="2.5"/>
-    <line x1="128" y1="316" x2="192" y2="316" stroke="url(#fretG)" stroke-width="2.5"/>
-    <line x1="128" y1="344" x2="192" y2="344" stroke="url(#fretG)" stroke-width="2.5"/>
-    <line x1="128" y1="372" x2="192" y2="372" stroke="url(#fretG)" stroke-width="2.5"/>
+    <line x1="128" y1="188" x2="192" y2="188" stroke="url(#fretG)" stroke-width="2.5"/>
+    <line x1="128" y1="216" x2="192" y2="216" stroke="url(#fretG)" stroke-width="2.5"/>
+    <line x1="128" y1="244" x2="192" y2="244" stroke="url(#fretG)" stroke-width="2.5"/>
+    <line x1="128" y1="272" x2="192" y2="272" stroke="url(#fretG)" stroke-width="2.5"/>
     <!-- 指板中线 -->
-    <circle cx="160" cy="302" r="3" fill="#d8d0b8" opacity="0.4"/>
-    <circle cx="160" cy="358" r="3" fill="#d8d0b8" opacity="0.4"/>
+    <circle cx="160" cy="202" r="3" fill="#d8d0b8" opacity="0.4"/>
+    <circle cx="160" cy="258" r="3" fill="#d8d0b8" opacity="0.4"/>
 
-    <!-- 琴头 (3+3 造型) -->
-    <path d="M 125,52 L 125,250 Q 125,265 140,265 L 180,265 Q 195,265 195,250 L 195,52 Q 195,18 160,10 Q 125,18 125,52 Z"
+    <!-- 琴头 (3+3 造型，更短) -->
+    <path d="M 125,30 L 125,150 Q 125,162 137,162 L 183,162 Q 195,162 195,150 L 195,30 Q 195,10 160,5 Q 125,10 125,30 Z"
           fill="url(#woodG)" stroke="#5a4010" stroke-width="1.5"/>
 
     <!-- 琴头顶部弧线装饰 -->
-    <path d="M 128,50 Q 128,22 160,14 Q 192,22 192,50" fill="none" stroke="#6a5010" stroke-width="1.2" opacity="0.5"/>
-    <path d="M 131,48 Q 131,26 160,18 Q 189,26 189,48" fill="none" stroke="#6a5010" stroke-width="0.6" opacity="0.3"/>
+    <path d="M 128,28 Q 128,12 160,8 Q 192,12 192,28" fill="none" stroke="#6a5010" stroke-width="1.2" opacity="0.5"/>
+    <path d="M 131,26 Q 131,15 160,11 Q 189,15 189,26" fill="none" stroke="#6a5010" stroke-width="0.6" opacity="0.3"/>
 
     <!-- 木纹 -->
-    <clipPath id="hc"><path d="M 125,52 L 125,250 Q 125,265 140,265 L 180,265 Q 195,265 195,250 L 195,52 Q 195,18 160,10 Q 125,18 125,52 Z"/></clipPath>
+    <clipPath id="hc"><path d="M 125,30 L 125,150 Q 125,162 137,162 L 183,162 Q 195,162 195,150 L 195,30 Q 195,10 160,5 Q 125,10 125,30 Z"/></clipPath>
     <g clip-path="url(#hc)">
-      <path d="M 135,55 Q 132,150 138,258" fill="none" stroke="#b89020" stroke-width="0.5" opacity="0.3"/>
-      <path d="M 147,52 Q 145,150 150,260" fill="none" stroke="#b89020" stroke-width="0.4" opacity="0.2"/>
-      <path d="M 160,50 Q 160,150 162,262" fill="none" stroke="#b89020" stroke-width="0.5" opacity="0.3"/>
-      <path d="M 173,52 Q 175,150 176,260" fill="none" stroke="#b89020" stroke-width="0.4" opacity="0.2"/>
-      <path d="M 185,55 Q 188,150 190,258" fill="none" stroke="#b89020" stroke-width="0.5" opacity="0.3"/>
+      <path d="M 135,33 Q 132,90 138,148" fill="none" stroke="#b89020" stroke-width="0.5" opacity="0.3"/>
+      <path d="M 147,31 Q 145,90 150,150" fill="none" stroke="#b89020" stroke-width="0.4" opacity="0.2"/>
+      <path d="M 160,29 Q 160,90 162,152" fill="none" stroke="#b89020" stroke-width="0.5" opacity="0.3"/>
+      <path d="M 173,31 Q 175,90 176,150" fill="none" stroke="#b89020" stroke-width="0.4" opacity="0.2"/>
+      <path d="M 185,33 Q 188,90 190,148" fill="none" stroke="#b89020" stroke-width="0.5" opacity="0.3"/>
     </g>
 
     <!-- 弦枕 -->
-    <rect x="124" y="258" width="72" height="6" rx="2" fill="#f0ead8" stroke="#d0c8a8" stroke-width="0.5"/>
+    <rect x="124" y="158" width="72" height="6" rx="2" fill="#f0ead8" stroke="#d0c8a8" stroke-width="0.5"/>
 
     <!-- 琴弦 -->
-    <line x1="138" y1="135" x2="142" y2="400" stroke="#ddd8c8" stroke-width="2.2" opacity="0.45"/>
-    <line x1="138" y1="180" x2="150" y2="400" stroke="#ddd8c8" stroke-width="2.8" opacity="0.45"/>
-    <line x1="138" y1="225" x2="158" y2="400" stroke="#ddd8c8" stroke-width="3.2" opacity="0.45"/>
-    <line x1="182" y1="135" x2="178" y2="400" stroke="#ddd8c8" stroke-width="1.6" opacity="0.45"/>
-    <line x1="182" y1="180" x2="170" y2="400" stroke="#ddd8c8" stroke-width="1.2" opacity="0.45"/>
-    <line x1="182" y1="225" x2="162" y2="400" stroke="#ddd8c8" stroke-width="1" opacity="0.45"/>
+    <line x1="138" y1="60" x2="142" y2="300" stroke="#ddd8c8" stroke-width="2.2" opacity="0.45"/>
+    <line x1="138" y1="95" x2="150" y2="300" stroke="#ddd8c8" stroke-width="2.8" opacity="0.45"/>
+    <line x1="138" y1="130" x2="158" y2="300" stroke="#ddd8c8" stroke-width="3.2" opacity="0.45"/>
+    <line x1="182" y1="60" x2="178" y2="300" stroke="#ddd8c8" stroke-width="1.6" opacity="0.45"/>
+    <line x1="182" y1="95" x2="170" y2="300" stroke="#ddd8c8" stroke-width="1.2" opacity="0.45"/>
+    <line x1="182" y1="130" x2="162" y2="300" stroke="#ddd8c8" stroke-width="1" opacity="0.45"/>
 
-    <!-- 左排弦钮 (4, 5, 6) -->
+    <!-- 左排弦钮 (4, 5, 6) - 位置更紧凑 -->
     <g v-for="peg in leftPegs" :key="'l'+peg.num">
       <rect :x="peg.x - 4" :y="peg.y - 2" width="18" height="4" rx="1" fill="#aaa" stroke="#888" stroke-width="0.5"/>
       <circle :cx="peg.x" :cy="peg.y" r="11" fill="url(#pegG)" stroke="#999" stroke-width="0.8" filter="url(#ps)"/>
@@ -114,12 +114,6 @@
             fill="#fff" class="note-text" @click="$emit('changeNote', peg.num)"
             style="cursor:pointer">{{ getNote(peg.num) }}</text>
     </g>
-
-    <!-- 选中弦钮高亮圈 -->
-    <g v-for="peg in allPegs" :key="'hl'+peg.num">
-      <circle v-if="activePeg === peg.num" :cx="peg.x" :cy="peg.y" r="15"
-              fill="none" stroke="#a855f7" stroke-width="2"/>
-    </g>
   </svg>
 </template>
 
@@ -130,17 +124,17 @@ const props = defineProps<{
 }>()
 defineEmits<{ select: [n: number]; changeNote: [n: number] }>()
 
+// 弦钮位置 - 更紧凑的间距
 const leftPegs = [
-  { num: 4, x: 138, y: 135 },
-  { num: 5, x: 138, y: 180 },
-  { num: 6, x: 138, y: 225 },
+  { num: 4, x: 138, y: 60 },
+  { num: 5, x: 138, y: 95 },
+  { num: 6, x: 138, y: 130 },
 ]
 const rightPegs = [
-  { num: 3, x: 182, y: 135 },
-  { num: 2, x: 182, y: 180 },
-  { num: 1, x: 182, y: 225 },
+  { num: 3, x: 182, y: 60 },
+  { num: 2, x: 182, y: 95 },
+  { num: 1, x: 182, y: 130 },
 ]
-const allPegs = [...leftPegs, ...rightPegs]
 
 function getNote(num: number): string {
   if (!props.stringNotes) return '--'
@@ -151,10 +145,11 @@ function getNote(num: number): string {
 <style scoped>
 .headstock-svg {
   width: 100%;
-  max-width: 340px;
+  max-width: 320px;
   height: auto;
   display: block;
 }
+
 .num-bg {
   fill: #222;
   stroke: #555;

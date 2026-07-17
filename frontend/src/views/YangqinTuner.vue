@@ -45,6 +45,12 @@
       </div>
     </div>
 
+    <!-- 440/442 频率开关 -->
+    <div class="a4-switch">
+      <button :class="['a4-btn', { active: a4Ref === 440 }]" @click="a4Ref = 440">440</button>
+      <button :class="['a4-btn', { active: a4Ref === 442 }]" @click="a4Ref = 442">442</button>
+    </div>
+
     <!-- 列选择 -->
     <div class="selector-group">
       <div class="selector-label">列</div>
@@ -113,6 +119,10 @@ import { usePitchDetector } from '../composables/usePitchDetector'
 const showHelp = ref(false)
 const selectedCol = ref(3)
 const selectedStringNum = ref(9)
+const a4Ref = ref(440)  // 440 或 442
+
+// 频率转换比例 (442/440)
+const freqRatio = computed(() => a4Ref.value / 440)
 
 // 获取当前列的所有弦
 const stringsInCol = computed((): YangqinString[] => {
@@ -127,7 +137,10 @@ const stringsInCol = computed((): YangqinString[] => {
 
 // 选中的弦
 const targetString = computed((): YangqinString | null => {
-  return YANGQIN_STRINGS.find(s => s.stringNum === selectedStringNum.value) || null
+  const s = YANGQIN_STRINGS.find(s => s.stringNum === selectedStringNum.value) || null
+  if (!s) return null
+  // 根据 a4Ref 转换频率
+  return { ...s, frequency: s.frequency * freqRatio.value }
 })
 
 // 科学音名转亥姆霍兹音名
@@ -269,6 +282,33 @@ function toggleMic() {
   font-size: 14px;
   color: #999;
   font-weight: 400;
+}
+
+/* 440/442 开关 */
+.a4-switch {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.a4-btn {
+  padding: 8px 24px;
+  border: 1.5px solid #ddd;
+  border-radius: 20px;
+  background: #fff;
+  color: #666;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.a4-btn:hover {
+  border-color: #bbb;
+}
+.a4-btn.active {
+  border-color: #8B6914;
+  background: #8B6914;
+  color: #fff;
 }
 
 /* 列选择 */
