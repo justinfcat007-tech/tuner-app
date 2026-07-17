@@ -40,7 +40,7 @@ export interface LoginData {
 
 export interface RegisterData {
   username: string
-  email: string
+  email?: string
   password: string
 }
 

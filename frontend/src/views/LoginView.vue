@@ -15,11 +15,6 @@
           <input v-model="form.username" type="text" placeholder="请输入用户名" required />
         </div>
 
-        <div v-if="mode === 'register'" class="input-group">
-          <label>邮箱</label>
-          <input v-model="form.email" type="email" placeholder="请输入邮箱" />
-        </div>
-
         <div class="input-group">
           <label>密码</label>
           <input v-model="form.password" type="password" placeholder="请输入密码" required />
@@ -47,7 +42,6 @@ const error = ref('')
 
 const form = reactive({
   username: '',
-  email: '',
   password: '',
 })
 
@@ -60,8 +54,7 @@ async function handleSubmit() {
     if (mode.value === 'login') {
       res = await authAPI.login({ username: form.username, password: form.password })
     } else {
-      if (!form.email) { error.value = '请填写邮箱'; loading.value = false; return }
-      res = await authAPI.register({ username: form.username, email: form.email, password: form.password })
+      res = await authAPI.register({ username: form.username, password: form.password })
     }
 
     if (res.code === 0) {

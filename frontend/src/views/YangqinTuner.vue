@@ -1,97 +1,80 @@
 <template>
   <div class="yangqin-page">
-    <!-- Header -->
-    <header class="header">
-      <router-link to="/" class="back-link">← 返回</router-link>
-      <h1>🎶 扬琴调音器</h1>
-      <div class="header-right">
-        <span class="username" v-if="userInfo">{{ userInfo.nickname || userInfo.username }}</span>
-      </div>
+    <!-- 顶部 -->
+    <header class="top-bar">
+      <button class="back-btn" @click="$router.back()">‹</button>
+      <button class="help-btn" @click="showHelp = !showHelp">?</button>
     </header>
 
-    <!-- 模式切换 -->
-    <div class="mode-tabs">
-      <button :class="{ active: mode === 'manual' }" @click="mode = 'manual'">
-        ✋ 手动设置
-      </button>
-      <button :class="{ active: mode === 'auto' }" @click="mode = 'auto'">
-        🎯 自动检测
-      </button>
-    </div>
+    <!-- 调音仪表盘 -->
+    <TunerGauge :cents="currentCents" :in-tune="isInTune" :active="!!pitchData.frequency" />
 
-    <!-- 手动模式: 行列选择器 -->
-    <div v-if="mode === 'manual'" class="manual-panel">
-      <div class="selector-row">
-        <label>行 (从上到下)</label>
-        <div class="btn-group">
-          <button
-            v-for="r in 4" :key="'r' + r"
-            :class="['sel-btn', { active: manualRow === r }]"
-            @click="manualRow = r"
-          >
-            第{{ r }}行
-          </button>
+    <!-- 音高信息面板 -->
+    <div class="info-panel">
+      <div class="info-row">
+        <div class="info-item">
+          <span class="info-label">正确音名</span>
+          <span class="info-value correct">{{ targetNote }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">当前音名</span>
+          <span class="info-value" :class="currentNoteClass">{{ currentNote }}</span>
         </div>
       </div>
-      <div class="selector-row">
-        <label>列 (从左到右)</label>
-        <div class="btn-group">
-          <button
-            v-for="c in 6" :key="'c' + c"
-            :class="['sel-btn', { active: manualCol === c }]"
-            @click="manualCol = c"
-          >
-            第{{ c }}列
-          </button>
+      <div class="info-row">
+        <div class="info-item">
+          <span class="info-label">正确频率</span>
+          <span class="info-value correct">{{ targetFreq }}</span>
+          <span class="info-unit">Hz</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">当前频率</span>
+          <span class="info-value" :class="currentNoteClass">{{ currentFreq }}</span>
+          <span class="info-unit">Hz</span>
         </div>
       </div>
-      <div v-if="manualString" class="manual-target">
-        <span class="mt-pos">第{{ manualString.row }}行 · 第{{ manualString.col }}列</span>
-        <span class="mt-note">{{ manualString.label }}</span>
-        <span class="mt-freq">{{ manualString.frequency.toFixed(1) }} Hz</span>
+      <div class="info-row">
+        <div class="info-item">
+          <span class="info-label">简谱</span>
+          <span class="info-value correct">{{ currentNotation }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">音准</span>
+          <span class="info-value" :class="tuneStatusClass">{{ tuneStatus }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- 自动模式提示 -->
-    <div v-if="mode === 'auto'" class="auto-panel">
-      <div v-if="!isListening" class="auto-hint">
-        <p>点击下方"开始监听"，弹奏任意弦后自动识别位置并显示调弦方向</p>
-      </div>
-      <div v-else class="auto-hint listening">
-        <p>🎙️ 正在监听... 弹奏一根弦即可识别</p>
+    <!-- 列选择 -->
+    <div class="selector-group">
+      <div class="selector-label">列</div>
+      <div class="selector-scroll">
+        <button
+          v-for="c in 6" :key="c"
+          :class="['sel-btn', { active: selectedCol === c }]"
+          @click="onColChange(c)"
+        >{{ c }}</button>
       </div>
     </div>
 
-    <!-- 扬琴示意图 -->
-    <YangqinSchematic
-      :strings="YANGQIN_STRINGS"
-      :selected="mode === 'manual' ? manualString : null"
-      :detected-string="autoDetectedString"
-      :detected-cents="autoCents"
-      :detected-in-tune="autoInTune"
-      @select="onSchematicSelect"
-    />
-
-    <!-- 手动模式: 音高仪表盘 -->
-    <template v-if="mode === 'manual' && isListening && manualString">
-      <TunerGauge
-        :note="pitchData.note"
-        :frequency="pitchData.frequency"
-        :cents="manualCents"
-        :in-tune="Math.abs(manualCents) <= 5"
-      />
-      <div class="manual-result" :class="{ ok: Math.abs(manualCents) <= 5 }">
-        <span v-if="pitchData.note === '--'">等待声音...</span>
-        <span v-else-if="Math.abs(manualCents) <= 5">✅ {{ manualString.label }} 已准!</span>
-        <span v-else-if="manualCents > 0">⬇ 偏高 {{ manualCents }} cents — 松弦</span>
-        <span v-else>⬆ 偏低 {{ Math.abs(manualCents) }} cents — 紧弦</span>
+    <!-- 弦列表 -->
+    <div class="string-list">
+      <div
+        v-for="s in stringsInCol"
+        :key="s.stringNum"
+        :class="['string-row', { active: selectedStringNum === s.stringNum }]"
+        @click="selectedStringNum = s.stringNum"
+      >
+        <span class="string-num">{{ s.stringNum }}弦</span>
+        <span class="string-note">{{ s.label }}</span>
+        <span class="string-notation">[{{ s.notation }}]</span>
       </div>
-    </template>
+    </div>
 
     <!-- 麦克风控制 -->
-    <div class="controls">
+    <div class="mic-section">
       <button :class="['mic-btn', { listening: isListening }]" @click="toggleMic">
-        <span class="mic-icon">{{ isListening ? '🎙️' : '🔇' }}</span>
+        <span class="mic-icon">{{ isListening ? '️' : '' }}</span>
         <span>{{ isListening ? '正在监听...' : '点击开始' }}</span>
       </button>
       <div v-if="isListening" class="volume-bar">
@@ -99,83 +82,120 @@
       </div>
     </div>
 
-    <!-- 弦列表 (快速跳转) -->
-    <div class="string-grid-compact">
-      <div class="grid-title">快速选弦</div>
-      <div v-for="r in 4" :key="'gr' + r" class="grid-row">
-        <span class="grid-row-label">R{{ r }}</span>
-        <button
-          v-for="c in 6" :key="'gc' + r + c"
-          :class="['grid-cell', {
-            active: mode === 'manual' && manualRow === r && manualCol === c,
-            detected: mode === 'auto' && autoDetectedString?.row === r && autoDetectedString?.col === c
-          }]"
-          @click="manualRow = r; manualCol = c; mode = 'manual'"
-        >
-          {{ getLabel(r, c) }}
-        </button>
+    <!-- 帮助弹窗 -->
+    <div v-if="showHelp" class="help-overlay" @click="showHelp = false">
+      <div class="help-content" @click.stop>
+        <h3>使用说明</h3>
+        <p>1. 选择列，然后点击弦</p>
+        <p>2. 点击"点击开始"开启麦克风</p>
+        <p>3. 弹奏对应弦，观察仪表盘</p>
+        <ul>
+          <li>指针偏左 → 偏低 → 紧弦</li>
+          <li>指针偏右 → 偏高 → 松弦</li>
+          <li>指针居中 → 音准OK</li>
+        </ul>
+        <button @click="showHelp = false">知道了</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import YangqinSchematic from '../components/YangqinSchematic.vue'
+import { ref, computed } from 'vue'
 import TunerGauge from '../components/TunerGauge.vue'
 import {
   YANGQIN_STRINGS,
-  getStringAt,
-  findNearestString,
+  getStringsByRowCol,
   type YangqinString,
 } from '../data/yangqin'
 import { usePitchDetector } from '../composables/usePitchDetector'
-import type { UserInfo } from '../api'
 
-const userInfo = ref<UserInfo | null>(null)
+const showHelp = ref(false)
+const selectedCol = ref(3)
+const selectedStringNum = ref(9)
 
-onMounted(() => {
-  const u = localStorage.getItem('user')
-  if (u) userInfo.value = JSON.parse(u)
+// 获取当前列的所有弦
+const stringsInCol = computed((): YangqinString[] => {
+  // 从第1排开始查找该列的弦
+  const all: YangqinString[] = []
+  for (let row = 1; row <= 4; row++) {
+    const strings = getStringsByRowCol(row, selectedCol.value)
+    all.push(...strings)
+  }
+  return all
 })
 
-const mode = ref<'manual' | 'auto'>('manual')
-const manualRow = ref(2)
-const manualCol = ref(2)
+// 选中的弦
+const targetString = computed((): YangqinString | null => {
+  return YANGQIN_STRINGS.find(s => s.stringNum === selectedStringNum.value) || null
+})
 
+// 科学音名转亥姆霍兹音名
+const targetNote = computed(() => {
+  if (!targetString.value) return '--'
+  const note = targetString.value.note
+  const match = note.match(/^([#b]?)([A-G])(\d)/)
+  if (!match) return note.toLowerCase()
+  const accidental = match[1]
+  const letter = match[2]
+  const octave = parseInt(match[3])
+  if (octave >= 4) return `${accidental}${letter.toLowerCase()}${octave - 3}`
+  if (octave === 3) return `${accidental}${letter.toLowerCase()}`
+  return `${accidental}${letter}`
+})
+
+const targetFreq = computed(() => {
+  if (!targetString.value) return '--'
+  return targetString.value.frequency.toFixed(2)
+})
+
+// 音高检测
 const { isListening, pitchData, volume, start, stop } = usePitchDetector()
 
-// 手动模式
-const manualString = computed(() => getStringAt(manualRow.value, manualCol.value))
-
-const manualCents = computed(() => {
-  if (!manualString.value || !pitchData.value.frequency) return 0
-  return Math.round(1200 * Math.log2(pitchData.value.frequency / manualString.value.frequency))
+const currentNote = computed(() => pitchData.value.note || '--')
+const currentFreq = computed(() => {
+  if (!pitchData.value.frequency) return '--'
+  return pitchData.value.frequency.toFixed(2)
 })
 
-// 自动模式
-const autoDetectedString = ref<YangqinString | null>(null)
-const autoCents = ref(0)
-const autoInTune = ref(false)
+const currentCents = computed(() => {
+  if (!targetString.value || !pitchData.value.frequency) return 0
+  return Math.round(1200 * Math.log2(pitchData.value.frequency / targetString.value.frequency))
+})
 
-watch(() => pitchData.value.frequency, (freq) => {
-  if (mode.value !== 'auto' || !freq) return
-  const result = findNearestString(freq)
-  if (result && Math.abs(result.cents) < 100) {
-    autoDetectedString.value = result.string
-    autoCents.value = result.cents
-    autoInTune.value = Math.abs(result.cents) <= 5
+const isInTune = computed(() => Math.abs(currentCents.value) <= 5)
+
+const currentNoteClass = computed(() => {
+  if (!pitchData.value.frequency) return ''
+  if (isInTune.value) return 'correct'
+  return 'off'
+})
+
+const currentNotation = computed(() => {
+  if (!targetString.value) return '--'
+  return targetString.value.notation || '?'
+})
+
+const tuneStatus = computed(() => {
+  if (!pitchData.value.frequency) return '--'
+  if (isInTune.value) return '准确'
+  if (currentCents.value > 0) return '偏高'
+  return '偏低'
+})
+
+const tuneStatusClass = computed(() => {
+  if (!pitchData.value.frequency) return ''
+  if (isInTune.value) return 'correct'
+  return 'off'
+})
+
+function onColChange(col: number) {
+  selectedCol.value = col
+  // 自动选择该列的第一根弦
+  const strings = getStringsByRowCol(1, col)
+  if (strings.length > 0) {
+    selectedStringNum.value = strings[0].stringNum
   }
-})
-
-function onSchematicSelect(s: YangqinString) {
-  manualRow.value = s.row
-  manualCol.value = s.col
-  mode.value = 'manual'
-}
-
-function getLabel(row: number, col: number): string {
-  return getStringAt(row, col)?.label || '--'
 }
 
 function toggleMic() {
@@ -186,189 +206,248 @@ function toggleMic() {
 
 <style scoped>
 .yangqin-page {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 16px;
+  padding: 0 16px 24px;
   min-height: 100vh;
+  background: #faf8f5;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
-.header {
+.top-bar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  padding: 12px 0 8px;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  border: none; background: none;
+  font-size: 24px; color: #333;
+  cursor: pointer;
+}
+.help-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid #ccc;
+  background: none;
+  font-size: 14px; color: #999;
+  cursor: pointer;
+}
+
+/* 信息面板 */
+.info-panel {
+  padding: 12px 20px;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
   margin-bottom: 16px;
 }
-.back-link { color: #64748b; text-decoration: none; font-size: 14px; }
-.back-link:hover { color: #f1f5f9; }
-.header h1 { color: #f1f5f9; font-size: 22px; margin: 0; flex: 1; }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.username { color: #94a3b8; font-size: 14px; }
+.info-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.info-row:last-child { margin-bottom: 0; }
+.info-item {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.info-label {
+  font-size: 14px;
+  color: #999;
+  min-width: 56px;
+}
+.info-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  transition: color 0.3s;
+}
+.info-value.correct { color: #333; }
+.info-value.off { color: #c0392b; }
+.info-unit {
+  font-size: 14px;
+  color: #999;
+  font-weight: 400;
+}
 
-/* 模式切换 */
-.mode-tabs {
+/* 列选择 */
+.selector-group {
+  margin: 16px 0;
+}
+.selector-label {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.selector-scroll {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
-.mode-tabs button {
-  flex: 1;
-  padding: 12px;
-  background: #1e293b;
-  border: 2px solid #334155;
-  border-radius: 12px;
-  color: #94a3b8;
+.selector-scroll::-webkit-scrollbar {
+  display: none;
+}
+.sel-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid #ddd;
+  border-radius: 50%;
+  background: #fff;
+  color: #666;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
-.mode-tabs button.active {
-  border-color: #3b82f6;
-  color: #f1f5f9;
-  background: #1e3a8a;
+.sel-btn:hover { border-color: #bbb; }
+.sel-btn.active {
+  border-color: #8B6914;
+  background: #8B6914;
+  color: #fff;
 }
 
-/* 手动面板 */
-.manual-panel {
-  background: #1e293b;
+/* 弦列表 */
+.string-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #eee;
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  border: 1px solid #334155;
+  background: #fff;
 }
-.selector-row {
-  margin-bottom: 12px;
-}
-.selector-row label {
-  display: block;
-  color: #64748b;
-  font-size: 12px;
-  margin-bottom: 6px;
-}
-.btn-group {
-  display: flex;
-  gap: 6px;
-}
-.sel-btn {
-  flex: 1;
-  padding: 8px 4px;
-  background: #0f172a;
-  border: 2px solid #334155;
-  border-radius: 8px;
-  color: #94a3b8;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.sel-btn:hover { border-color: #64748b; }
-.sel-btn.active { border-color: #3b82f6; color: #f1f5f9; background: #1e3a8a; }
-
-.manual-target {
+.string-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  background: #0f172a;
-  border-radius: 8px;
-  margin-top: 4px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f5f2ed;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-.mt-pos { color: #64748b; font-size: 12px; }
-.mt-note { color: #f1f5f9; font-size: 20px; font-weight: 700; }
-.mt-freq { color: #94a3b8; font-size: 14px; }
-
-/* 自动面板 */
-.auto-panel {
-  margin-bottom: 16px;
-}
-.auto-hint {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  padding: 14px;
-  text-align: center;
-}
-.auto-hint p { color: #64748b; font-size: 14px; margin: 0; }
-.auto-hint.listening { border-color: #dc2626; background: #3b1111; }
-.auto-hint.listening p { color: #fca5a5; }
-
-/* 手动结果 */
-.manual-result {
-  text-align: center;
-  padding: 12px;
-  background: #1e293b;
-  border-radius: 12px;
-  border: 2px solid #334155;
-  color: #f87171;
-  font-size: 16px;
+.string-row:last-child { border-bottom: none; }
+.string-row:hover { background: #f9f5ee; }
+.string-row.active { background: #f0ebe0; }
+.string-row.active .string-num,
+.string-row.active .string-note,
+.string-row.active .string-notation {
+  color: #333;
   font-weight: 600;
-  margin-top: 12px;
-  transition: all 0.3s;
 }
-.manual-result.ok { border-color: #22c55e; background: #14532d; color: #4ade80; }
+.string-num {
+  width: 50px;
+  font-size: 14px;
+  color: #8B6914;
+  font-weight: 500;
+}
+.string-note {
+  flex: 1;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+.string-notation {
+  font-size: 14px;
+  color: #999;
+}
 
 /* 麦克风 */
-.controls { text-align: center; margin: 20px 0; }
+.mic-section {
+  text-align: center;
+  padding: 20px 0;
+}
 .mic-btn {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 32px;
+  padding: 14px 36px;
   font-size: 16px;
-  font-weight: 600;
-  color: #f1f5f9;
-  background: #334155;
-  border: 2px solid #475569;
+  font-weight: 500;
+  color: #fff;
+  background: #8B6914;
+  border: none;
   border-radius: 50px;
   cursor: pointer;
   transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(139, 105, 20, 0.3);
 }
-.mic-btn:hover { background: #475569; transform: scale(1.05); }
-.mic-btn.listening { background: #991b1b; border-color: #ef4444; animation: pulse 2s infinite; }
-.mic-icon { font-size: 22px; }
-@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); } }
-.volume-bar { width: 200px; height: 4px; background: #334155; border-radius: 2px; margin: 10px auto; overflow: hidden; }
-.volume-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); border-radius: 2px; transition: width 0.05s; }
+.mic-btn:hover {
+  background: #a07d1a;
+  transform: translateY(-1px);
+}
+.mic-btn.listening {
+  background: #c0392b;
+  box-shadow: 0 4px 12px rgba(192, 57, 43, 0.3);
+  animation: micPulse 2s infinite;
+}
+.mic-icon { font-size: 20px; }
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(192, 57, 43, 0); }
+}
+.volume-bar {
+  width: 160px;
+  height: 4px;
+  background: #e0ddd8;
+  border-radius: 2px;
+  margin: 12px auto 0;
+  overflow: hidden;
+}
+.volume-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8B6914, #c0392b);
+  border-radius: 2px;
+  transition: width 0.05s;
+}
 
-/* 快速弦网格 */
-.string-grid-compact {
-  background: #1e293b;
-  border-radius: 12px;
-  padding: 14px;
-  margin-top: 20px;
-  border: 1px solid #334155;
-}
-.grid-title {
-  color: #64748b;
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-.grid-row {
+/* 帮助弹窗 */
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 4px;
+  justify-content: center;
+  z-index: 100;
 }
-.grid-row-label {
-  width: 28px;
-  color: #475569;
-  font-size: 11px;
-  font-weight: 600;
-  text-align: center;
+.help-content {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
 }
-.grid-cell {
-  flex: 1;
-  padding: 8px 2px;
-  background: #0f172a;
-  border: 1.5px solid #334155;
-  border-radius: 6px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 600;
+.help-content h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #333;
+}
+.help-content p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+.help-content ul {
+  margin: 12px 0;
+  padding-left: 20px;
+}
+.help-content li {
+  font-size: 14px;
+  color: #666;
+  margin: 6px 0;
+}
+.help-content button {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  background: #8B6914;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
   cursor: pointer;
-  transition: all 0.15s;
-  text-align: center;
 }
-.grid-cell:hover { border-color: #64748b; }
-.grid-cell.active { border-color: #3b82f6; color: #f1f5f9; background: #1e3a8a; }
-.grid-cell.detected { border-color: #f59e0b; color: #fbbf24; background: #422006; }
 </style>

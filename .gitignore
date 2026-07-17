@@ -2,3 +2,4 @@ node_modules/
 dist/
 *.db
 backend/tuner-server
+backend/.env

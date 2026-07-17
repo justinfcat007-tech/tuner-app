@@ -2,20 +2,32 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
+    path: '/',
+    name: 'Home',
+    component: () => import('../views/TunerView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('../views/LoginView.vue'),
   },
   {
-    path: '/',
-    name: 'Tuner',
-    component: () => import('../views/TunerView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
     path: '/yangqin',
     name: 'YangqinTuner',
     component: () => import('../views/YangqinTuner.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/guitar',
+    name: 'GuitarTuner',
+    component: () => import('../views/GuitarTuner.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/ukulele',
+    name: 'UkuleleTuner',
+    component: () => import('../views/UkuleleTuner.vue'),
     meta: { requiresAuth: true },
   },
   {

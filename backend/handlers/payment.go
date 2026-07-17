@@ -134,8 +134,10 @@ func (h *PaymentHandler) PayCallback(c *gin.Context) {
 	var user models.User
 	h.DB.First(&user, order.UserID)
 
-	expireTime := user.VIPExpire
-	if expireTime.Before(now) {
+	var expireTime time.Time
+	if user.VIPExpire != nil && user.VIPExpire.After(now) {
+		expireTime = *user.VIPExpire
+	} else {
 		expireTime = now
 	}
 
@@ -147,7 +149,7 @@ func (h *PaymentHandler) PayCallback(c *gin.Context) {
 	}
 
 	user.VIPLevel = product.VIPLevel
-	user.VIPExpire = expireTime
+	user.VIPExpire = &expireTime
 	h.DB.Save(&user)
 
 	c.JSON(http.StatusOK, models.APIResponse{Code: 0, Message: "支付成功"})

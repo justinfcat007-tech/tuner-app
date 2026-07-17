@@ -28,9 +28,9 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	// 检查用户名是否已存在
 	var count int64
-	h.DB.Model(&models.User{}).Where("username = ? OR email = ?", req.Username, req.Email).Count(&count)
+	h.DB.Model(&models.User{}).Where("username = ?", req.Username).Count(&count)
 	if count > 0 {
-		c.JSON(http.StatusConflict, models.APIResponse{Code: 409, Message: "用户名或邮箱已存在"})
+		c.JSON(http.StatusConflict, models.APIResponse{Code: 409, Message: "用户名已存在"})
 		return
 	}
 

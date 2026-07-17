@@ -4,16 +4,16 @@ import "time"
 
 // User 用户模型
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	Username  string    `json:"username" gorm:"uniqueIndex;size:50;not null"`
-	Email     string    `json:"email" gorm:"uniqueIndex;size:100;not null"`
-	Password  string    `json:"-" gorm:"not null"`
-	Nickname  string    `json:"nickname" gorm:"size:50"`
-	Avatar    string    `json:"avatar" gorm:"size:255"`
-	VIPLevel  int       `json:"vip_level" gorm:"default:0"` // 0=免费, 1=基础, 2=高级
-	VIPExpire time.Time `json:"vip_expire"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint       `json:"id" gorm:"primaryKey"`
+	Username  string     `json:"username" gorm:"uniqueIndex;size:50;not null"`
+	Email     string     `json:"email" gorm:"size:100"`
+	Password  string     `json:"-" gorm:"not null"`
+	Nickname  string     `json:"nickname" gorm:"size:50"`
+	Avatar    string     `json:"avatar" gorm:"size:255"`
+	VIPLevel  int        `json:"vip_level" gorm:"default:0"` // 0=免费, 1=基础, 2=高级
+	VIPExpire *time.Time `json:"vip_expire"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 // Order 支付订单
@@ -36,7 +36,7 @@ type Order struct {
 
 type RegisterRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=50"`
-	Email    string `json:"email" binding:"required,email"`
+	Email    string `json:"email"`
 	Password string `json:"password" binding:"required,min=6,max=100"`
 }
 
@@ -56,8 +56,8 @@ type UserInfo struct {
 	Email     string    `json:"email"`
 	Nickname  string    `json:"nickname"`
 	Avatar    string    `json:"avatar"`
-	VIPLevel  int       `json:"vip_level"`
-	VIPExpire time.Time `json:"vip_expire"`
+	VIPLevel  int        `json:"vip_level"`
+	VIPExpire *time.Time `json:"vip_expire"`
 }
 
 type CreateOrderRequest struct {

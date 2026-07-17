@@ -1,6 +1,11 @@
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
 	Port      string
@@ -13,12 +18,15 @@ type Config struct {
 }
 
 func Load() *Config {
+	if err := godotenv.Load(); err != nil {
+		log.Println("未找到 .env 文件，使用系统环境变量")
+	}
 	return &Config{
 		Port:      getEnv("PORT", "8080"),
 		DBHost:    getEnv("DB_HOST", "127.0.0.1"),
 		DBPort:    getEnv("DB_PORT", "3306"),
 		DBUser:    getEnv("DB_USER", "root"),
-		DBPass:    getEnv("DB_PASS", ""),
+		DBPass:    getEnv("DB_PASS", "123456"),
 		DBName:    getEnv("DB_NAME", "tuner_app"),
 		JWTSecret: getEnv("JWT_SECRET", "tuner-secret-change-in-production"),
 	}
