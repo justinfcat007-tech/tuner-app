@@ -78,6 +78,13 @@
             <option :value="443">443 Hz</option>
           </select>
         </div>
+        <div class="setting-row">
+          <span>语音提示</span>
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="voiceEnabled" @change="toggleVoice(($event.target as HTMLInputElement).checked)" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
         <button @click="showSettings = false">关闭</button>
       </div>
     </div>
@@ -127,7 +134,10 @@ const a4Ref = ref(440)
 const showHelp = ref(false)
 const showSettings = ref(false)
 
-const { isListening, pitchData, start, stop } = usePitchDetector()
+const { isListening, pitchData, start, stop, setInstrument, toggleVoice, voiceEnabled } = usePitchDetector()
+
+// 初始化乐器类型
+setInstrument('guitar')
 
 const activePeg = computed(() => selectedIdx.value + 1)
 const currentString = computed(() => strings.value[selectedIdx.value])

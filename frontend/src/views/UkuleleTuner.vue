@@ -125,7 +125,10 @@ const a4Ref = ref(440)
 const showHelp = ref(false)
 const showSettings = ref(false)
 
-const { isListening, pitchData, start, stop } = usePitchDetector()
+const { isListening, pitchData, start, stop, setInstrument, toggleVoice, voiceEnabled } = usePitchDetector()
+
+// 初始化乐器类型
+setInstrument('ukulele')
 
 const activePeg = computed(() => selectedIdx.value + 1)
 const currentString = computed(() => strings.value[selectedIdx.value])
