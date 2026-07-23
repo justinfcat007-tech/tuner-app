@@ -14,27 +14,34 @@
 
       <ProFeatureList :items="proFeatures" />
 
-      <PlanSelector
-        v-model="selectedPlan"
-        :plans="plans"
-        @update:model-value="onPlanSelect"
-      />
+      <!-- 套餐展示（只读） -->
+      <div class="plans-readonly">
+        <div class="plan-card">
+          <span class="plan-label">Monthly</span>
+          <span class="plan-price">$2.99</span>
+          <span class="plan-period">/ month</span>
+        </div>
+        <div class="plan-card featured">
+          <span class="plan-label">Yearly</span>
+          <span class="plan-badge">Best value</span>
+          <span class="plan-price">$19.99</span>
+          <span class="plan-period">/ year</span>
+          <span class="plan-trial">7-day free trial</span>
+        </div>
+      </div>
 
-      <button class="pro-cta" @click="onStartTrial">
-        Start 7-day free trial
+      <!-- Coming soon CTA -->
+      <button class="pro-cta" disabled @click="onCtaClick">
+        Coming soon
       </button>
       <p class="pro-cta-sub">
-        Cancel anytime. Then {{ yearlyPriceFormatted }}/year.
+        The core tuner is free to use. Pro features are coming soon.
       </p>
 
-      <button class="pro-restore" @click="onRestore">
-        Restore purchase
-      </button>
-
       <div class="pro-legal">
-        <a href="/privacy" class="pro-legal-link">Privacy</a>
+        <router-link to="/privacy" class="pro-legal-link">Privacy</router-link>
         <span class="pro-legal-sep">·</span>
-        <a href="/terms" class="pro-legal-link">Terms</a>
+        <router-link to="/support" class="pro-legal-link">Support</router-link>
       </div>
     </div>
 
@@ -43,53 +50,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import PlanSelector from '../components/PlanSelector.vue'
+import { ref } from 'vue'
 import ProFeatureList from '../components/ProFeatureList.vue'
 import ToastMessage from '../components/ToastMessage.vue'
-import { getBillingAdapter } from '../services/billing'
-import { track } from '../utils/analytics'
-import type { SubscriptionPlan } from '../types/growth'
 
 const toastRef = ref<InstanceType<typeof ToastMessage>>()
-const selectedPlan = ref<SubscriptionPlan['id']>('yearly')
 
 const proFeatures = [
-  'No ads',
-  'Custom & alternate tunings',
+  'Custom tunings',
+  'Alternate & drop tunings',
   'More instruments and tools',
+  'Practice history',
+  'Ad-free experience',
 ]
 
-const plans: SubscriptionPlan[] = [
-  { id: 'monthly', period: 'month', price: 2.99, currency: 'USD' },
-  { id: 'yearly', period: 'year', price: 19.99, currency: 'USD', trialDays: 7, badge: 'Best value' },
-]
-
-const yearlyPriceFormatted = computed(() => {
-  const yearly = plans.find(p => p.id === 'yearly')
-  if (!yearly) return '$19.99'
-  try {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: yearly.currency }).format(yearly.price)
-  } catch { return '$19.99' }
-})
-
-onMounted(() => {
-  track('pro_viewed', { source: 'route', entitlement_status: 'free' })
-})
-
-function onPlanSelect(planId: SubscriptionPlan['id']) {
-  track('plan_selected', { plan_id: planId, source: 'pro_page' })
-}
-
-async function onStartTrial() {
-  track('purchase_started', { plan_id: selectedPlan.value })
-  const adapter = getBillingAdapter({ show: (m: string) => toastRef.value?.show(m, 'info') })
-  await adapter.purchase(selectedPlan.value)
-}
-
-async function onRestore() {
-  const adapter = getBillingAdapter({ show: (m: string) => toastRef.value?.show(m, 'info') })
-  await adapter.restore()
+function onCtaClick() {
+  toastRef.value?.show('Tuner Pro is coming soon. The core tuner is free to use.', 'info')
 }
 </script>
 
@@ -130,40 +106,68 @@ async function onRestore() {
   color: var(--color-text-secondary, #B8C2CC);
   margin: 0 0 24px;
 }
+
+.plans-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.plan-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--color-surface, #18212C);
+  border: 2px solid var(--color-border, #314050);
+  border-radius: var(--radius-md, 16px);
+  opacity: 0.6;
+}
+.plan-card.featured {
+  border-color: var(--color-accent, #E7B65C);
+  background: rgba(231, 182, 92, 0.08);
+  opacity: 1;
+}
+.plan-label { font-weight: 600; font-size: var(--size-body, 15px); }
+.plan-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--color-ink, #1A222C);
+  background: var(--color-accent, #E7B65C);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm, 10px);
+  text-transform: uppercase;
+}
+.plan-price { font-weight: 600; font-size: var(--size-body-large, 17px); }
+.plan-period { color: var(--color-text-muted, #7F8A96); font-size: var(--size-caption, 12px); }
+.plan-trial {
+  width: 100%;
+  font-size: var(--size-caption, 12px);
+  color: var(--color-success, #63C79A);
+  margin-top: 4px;
+}
+
 .pro-cta {
   display: block;
   width: 100%;
   padding: 16px;
-  background: var(--color-accent, #E7B65C);
-  color: var(--color-ink, #1A222C);
+  background: var(--color-text-muted, #7F8A96);
+  color: var(--color-canvas, #10151D);
   border: none;
   border-radius: var(--radius-sm, 10px);
   font-size: 17px;
   font-weight: 700;
-  cursor: pointer;
+  cursor: not-allowed;
   margin-top: 24px;
-  transition: background var(--motion-fast, 150ms);
 }
-.pro-cta:hover { background: var(--color-accent-strong, #C98B32); }
 .pro-cta-sub {
   font-size: var(--size-caption, 12px);
   color: var(--color-text-muted, #7F8A96);
   text-align: center;
   margin: 12px 0 0;
 }
-.pro-restore {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  background: transparent;
-  color: var(--color-text-secondary, #B8C2CC);
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: color var(--motion-fast, 150ms);
-}
-.pro-restore:hover { color: var(--color-text-primary, #F8FAFC); }
 .pro-legal {
   display: flex;
   justify-content: center;

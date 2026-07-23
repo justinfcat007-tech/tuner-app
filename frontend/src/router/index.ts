@@ -28,24 +28,35 @@ const routes = [
     component: () => import('../views/TuningLibraryView.vue'),
   },
 
-  // 登录页
+  // 公开信息页面
+  {
+    path: '/pro',
+    name: 'Pro',
+    component: () => import('../views/ProView.vue'),
+  },
+  {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('../views/PrivacyView.vue'),
+  },
+  {
+    path: '/support',
+    name: 'Support',
+    component: () => import('../views/SupportView.vue'),
+  },
+  {
+    path: '/vip',
+    redirect: '/pro',
+  },
+
+  // 登录页（MVP 不主动展示入口）
   {
     path: '/login',
     name: 'Login',
     component: () => import('../views/LoginView.vue'),
   },
 
-  // 需要登录的页面
-  {
-    path: '/pro',
-    name: 'Pro',
-    component: () => import('../views/ProView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/vip',
-    redirect: '/pro',
-  },
+  // 需要登录的页面（MVP 不主动展示入口）
   {
     path: '/profile',
     name: 'Profile',
