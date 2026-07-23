@@ -1,35 +1,41 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+  // 免费调音页面 - 不需要登录
   {
     path: '/',
     name: 'Home',
     component: () => import('../views/TunerView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('../views/LoginView.vue'),
-  },
-  {
-    path: '/yangqin',
-    name: 'YangqinTuner',
-    component: () => import('../views/YangqinTuner.vue'),
-    meta: { requiresAuth: true },
   },
   {
     path: '/guitar',
     name: 'GuitarTuner',
     component: () => import('../views/GuitarTuner.vue'),
-    meta: { requiresAuth: true },
   },
   {
     path: '/ukulele',
     name: 'UkuleleTuner',
     component: () => import('../views/UkuleleTuner.vue'),
-    meta: { requiresAuth: true },
   },
+  {
+    path: '/yangqin',
+    name: 'YangqinTuner',
+    component: () => import('../views/YangqinTuner.vue'),
+  },
+  {
+    path: '/tuning-library',
+    name: 'TuningLibrary',
+    component: () => import('../views/TuningLibraryView.vue'),
+  },
+
+  // 登录页
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/LoginView.vue'),
+  },
+
+  // 需要登录的页面
   {
     path: '/pro',
     name: 'Pro',
@@ -39,12 +45,6 @@ const routes = [
   {
     path: '/vip',
     redirect: '/pro',
-  },
-  {
-    path: '/tuning-library',
-    name: 'TuningLibrary',
-    component: () => import('../views/TuningLibraryView.vue'),
-    meta: { requiresAuth: true },
   },
   {
     path: '/profile',
@@ -65,13 +65,15 @@ const router = createRouter({
   routes,
 })
 
-// 路由守卫
+// 路由守卫 - 只保护需要登录的页面
 router.beforeEach((to, _from, next) => {
-  const token = localStorage.getItem('token')
-  if (to.meta.requiresAuth && !token) {
-    next('/login')
-  } else if (to.path === '/login' && token) {
-    next('/')
+  if (to.meta.requiresAuth) {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      next('/login')
+    } else {
+      next()
+    }
   } else {
     next()
   }
