@@ -86,13 +86,13 @@ function onItemClick(item: { id: string; action: string }) {
 }
 
 async function onRestore() {
-  const adapter = getBillingAdapter(toastRef.value || undefined)
+  const adapter = getBillingAdapter({ show: (m: string) => toastRef.value?.show(m, 'info') })
   await adapter.restore()
 }
 
 async function onManage() {
-  const adapter = getBillingAdapter(toastRef.value || undefined)
-  await adapter.restore() // 首轮用 restore 提示不可用
+  const adapter = getBillingAdapter({ show: (m: string) => toastRef.value?.show(m, 'info') })
+  await adapter.restore()
 }
 
 function onDeleteAccount() {

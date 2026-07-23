@@ -83,12 +83,12 @@ function onPlanSelect(planId: SubscriptionPlan['id']) {
 
 async function onStartTrial() {
   track('purchase_started', { plan_id: selectedPlan.value })
-  const adapter = getBillingAdapter(toastRef.value || undefined)
+  const adapter = getBillingAdapter({ show: (m: string) => toastRef.value?.show(m, 'info') })
   await adapter.purchase(selectedPlan.value)
 }
 
 async function onRestore() {
-  const adapter = getBillingAdapter(toastRef.value || undefined)
+  const adapter = getBillingAdapter({ show: (m: string) => toastRef.value?.show(m, 'info') })
   await adapter.restore()
 }
 </script>

@@ -16,6 +16,7 @@ export interface TuningPreset {
   name: string
   notes: string[]
   instrument: string
+  locked?: boolean
 }
 defineProps<{
   preset: TuningPreset

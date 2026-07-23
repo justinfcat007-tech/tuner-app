@@ -27,7 +27,7 @@
           v-for="preset in presets"
           :key="preset.id"
           :preset="preset"
-          :locked="preset.locked"
+          :locked="preset.locked ?? false"
           @select="onSelect"
           @locked="onLocked(preset.id)"
         />
@@ -64,14 +64,12 @@ const router = useRouter()
 
 // Standard tuning is free; others are Pro
 const presets: TuningPreset[] = [
-  { id: 'standard', name: 'Standard E', notes: ['E', 'A', 'D', 'G', 'B', 'E'], instrument: 'guitar' },
-  { id: 'drop-d', name: 'Drop D', notes: ['D', 'A', 'D', 'G', 'B', 'E'], instrument: 'guitar' },
-  { id: 'dadgad', name: 'DADGAD', notes: ['D', 'A', 'D', 'G', 'A', 'D'], instrument: 'guitar' },
-  { id: 'open-g', name: 'Open G', notes: ['D', 'G', 'D', 'G', 'B', 'D'], instrument: 'guitar' },
-  { id: 'half-down', name: 'Half Step Down', notes: ['Eb', 'Ab', 'Db', 'Gb', 'Bb', 'Eb'], instrument: 'guitar' },
+  { id: 'standard', name: 'Standard E', notes: ['E', 'A', 'D', 'G', 'B', 'E'], instrument: 'guitar', locked: false },
+  { id: 'drop-d', name: 'Drop D', notes: ['D', 'A', 'D', 'G', 'B', 'E'], instrument: 'guitar', locked: true },
+  { id: 'dadgad', name: 'DADGAD', notes: ['D', 'A', 'D', 'G', 'A', 'D'], instrument: 'guitar', locked: true },
+  { id: 'open-g', name: 'Open G', notes: ['D', 'G', 'D', 'G', 'B', 'D'], instrument: 'guitar', locked: true },
+  { id: 'half-down', name: 'Half Step Down', notes: ['Eb', 'Ab', 'Db', 'Gb', 'Bb', 'Eb'], instrument: 'guitar', locked: true },
 ]
-
-const isPresetLocked = (id: string) => id !== 'standard'
 
 const instruments = ['Bass', 'Mandolin', 'Banjo']
 const gateOpen = ref(false)
