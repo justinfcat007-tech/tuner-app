@@ -6,10 +6,17 @@
       <button class="help-btn" @click="showHelp = !showHelp">?</button>
     </header>
 
+    <!-- 麦克风错误卡片 -->
+    <div v-if="micError" class="mic-error-card">
+      <h3 class="mic-error-title">Microphone access is needed</h3>
+      <p class="mic-error-desc">Allow microphone access to tune your instrument. Audio stays on this device.</p>
+      <button class="mic-error-btn" @click="onTryAgain">Try again</button>
+    </div>
+
     <!-- 调音仪表盘 -->
-    <TunerGauge :cents="currentCents" :in-tune="isInTune" :active="!!pitchData.frequency" />
+    <TunerGauge v-else :cents="currentCents" :in-tune="isInTune" :active="!!pitchData.frequency" />
     <p v-if="isListening && !pitchData.frequency" class="signal-status">
-      {{ detectionState === 'waiting' ? '正在等待声音稳定…' : detectionState === 'unstable' ? '声音不稳定，请单独敲击一根弦' : '请敲击或拨动琴弦' }}
+      {{ detectionState === 'waiting' ? 'Waiting for stable note…' : detectionState === 'unstable' ? 'Unstable — strike one string at a time' : 'Strike or pluck a string' }}
     </p>
 
     <!-- 音高信息面板 -->
@@ -84,7 +91,7 @@
     <div class="mic-section">
       <button :class="['mic-btn', { listening: isListening }]" @click="toggleMic">
         <span class="mic-icon">{{ isListening ? '️' : '' }}</span>
-        <span>{{ isListening ? '正在监听...' : '点击开始' }}</span>
+        <span>{{ isListening ? 'Listening…' : 'Start' }}</span>
       </button>
       <div v-if="isListening" class="volume-bar">
         <div class="volume-fill" :style="{ width: (volume * 100) + '%' }"></div>
@@ -94,23 +101,24 @@
     <!-- 帮助弹窗 -->
     <div v-if="showHelp" class="help-overlay" @click="showHelp = false">
       <div class="help-content" @click.stop>
-        <h3>使用说明</h3>
-        <p>1. 选择列，然后点击弦</p>
-        <p>2. 点击"点击开始"开启麦克风</p>
-        <p>3. 弹奏对应弦，观察仪表盘</p>
+        <h3>How to tune</h3>
+        <p>1. Select a column, then tap a string</p>
+        <p>2. Tap Start to enable the microphone</p>
+        <p>3. Strike the string and watch the gauge</p>
         <ul>
-          <li>指针偏左 → 偏低 → 紧弦</li>
-          <li>指针偏右 → 偏高 → 松弦</li>
-          <li>指针居中 → 音准OK</li>
+          <li>Needle left → too low → tighten</li>
+          <li>Needle right → too high → loosen</li>
+          <li>Needle centered → in tune</li>
         </ul>
-        <button @click="showHelp = false">知道了</button>
+        <button @click="showHelp = false">Got it</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import TunerGauge from '../components/TunerGauge.vue'
 import {
   YANGQIN_STRINGS,
@@ -166,12 +174,16 @@ const targetFreq = computed(() => {
 })
 
 // 音高检测
-const { isListening, pitchData, volume, detectionState, start, stop, setInstrument, setTargetFrequency } = usePitchDetector()
+const { isListening, pitchData, volume, detectionState, micError, start, stop, setInstrument, setTargetFrequency } = usePitchDetector()
 
 setInstrument('yangqin')
 watch(targetString, (string) => {
   setTargetFrequency(string?.frequency ?? 0)
 }, { immediate: true })
+
+function onTryAgain() {
+  start()
+}
 
 const currentNote = computed(() => pitchData.value.note || '--')
 const currentFreq = computed(() => {
@@ -224,7 +236,7 @@ function toggleMic() {
   else start()
 }
 
-onBeforeUnmount(stop)
+onBeforeRouteLeave(() => { stop() })
 </script>
 
 <style scoped>
@@ -255,6 +267,31 @@ onBeforeUnmount(stop)
   font-size: 14px; color: #999;
   cursor: pointer;
 }
+
+/* 麦克风错误卡片 */
+.mic-error-card {
+  background: #1a1a2e;
+  border: 1.5px solid #314050;
+  border-radius: 16px;
+  padding: 24px 20px;
+  margin: 16px auto;
+  text-align: center;
+  max-width: 360px;
+}
+.mic-error-title {
+  font-size: 17px; font-weight: 600; margin: 0 0 12px; color: #F8FAFC;
+}
+.mic-error-desc {
+  font-size: 15px; color: #B8C2CC; margin: 0 0 20px; line-height: 1.45;
+}
+.mic-error-btn {
+  padding: 12px 32px;
+  background: #E7B65C; color: #1A222C;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background 150ms;
+}
+.mic-error-btn:hover { background: #C98B32; }
 
 /* 信息面板 */
 .info-panel {

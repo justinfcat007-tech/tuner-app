@@ -10,6 +10,7 @@ export interface PitchData {
 export type InstrumentType = 'guitar' | 'yangqin' | 'ukulele'
 export type DetectionState = 'idle' | 'listening' | 'waiting' | 'unstable' | 'detected'
 export type TuneStatus = 'low' | 'high' | 'inTune' | null
+export type MicError = 'denied' | 'unavailable' | null
 
 const INSTRUMENT_RANGES: Record<InstrumentType, [number, number]> = {
   guitar: [80, 1200],
@@ -100,6 +101,7 @@ export function usePitchDetector() {
   const voiceEnabled = ref(true)
   const detectionState = ref<DetectionState>('idle')
   const tuneStatus = ref<TuneStatus>(null)
+  const micError = ref<MicError>(null)
 
   let audioContext: AudioContext | null = null
   let analyser: AnalyserNode | null = null
@@ -227,6 +229,7 @@ export function usePitchDetector() {
 
   async function start() {
     if (isListening.value) return
+    micError.value = null
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false },
@@ -254,6 +257,14 @@ export function usePitchDetector() {
       analyze()
     } catch (error) {
       console.error('Unable to access microphone:', error)
+      const err = error as Error
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        micError.value = 'denied'
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        micError.value = 'unavailable'
+      } else {
+        micError.value = 'unavailable'
+      }
       detectionState.value = 'idle'
     }
   }
@@ -296,7 +307,7 @@ export function usePitchDetector() {
   }
 
   return {
-    isListening, pitchData, volume, instrument, voiceEnabled, detectionState, tuneStatus,
+    isListening, pitchData, volume, instrument, voiceEnabled, detectionState, tuneStatus, micError,
     start, stop, setInstrument, setTargetFrequency, toggleVoice,
   }
 }

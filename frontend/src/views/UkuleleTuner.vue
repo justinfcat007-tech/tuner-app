@@ -4,13 +4,20 @@
     <header class="top-bar">
       <button class="back-btn" @click="$router.back()">‹</button>
       <div class="top-actions">
-        <button class="action-btn" @click="showHelp = true">▶ 调音帮助</button>
-        <button class="action-btn" @click="showSettings = true">⚙ 调音设置</button>
+        <button class="action-btn" @click="showHelp = true">Help</button>
+        <button class="action-btn" @click="showSettings = true">Settings</button>
       </div>
     </header>
 
+    <!-- 麦克风错误卡片 -->
+    <div v-if="micError" class="mic-error-card">
+      <h3 class="mic-error-title">Microphone access is needed</h3>
+      <p class="mic-error-desc">Allow microphone access to tune your instrument. Audio stays on this device.</p>
+      <button class="mic-error-btn" @click="onTryAgain">Try again</button>
+    </div>
+
     <!-- 横向调音仪表 -->
-    <TuningMeter :cents="currentCents" />
+    <TuningMeter v-else :cents="currentCents" />
 
     <!-- 当前弦信息 -->
     <div class="string-info">
@@ -45,34 +52,31 @@
         <input type="checkbox" v-model="autoMode" />
         <span class="toggle-slider"></span>
       </label>
-      <span class="toggle-label">自动</span>
+      <span class="toggle-label">Auto</span>
     </div>
 
     <!-- 调音状态提示 -->
     <div v-if="isListening && pitchData.frequency" class="tune-status" :class="statusClass">
-      <span v-if="isInTune">✅ 已准</span>
-      <span v-else-if="currentCents > 0">偏高 ↓ 松弦</span>
-      <span v-else>偏低 ↑ 紧弦</span>
-    </div>
-    <div v-else-if="isListening" class="signal-status">
-      {{ detectionState === 'waiting' ? '正在等待声音稳定…' : detectionState === 'unstable' ? '声音不稳定，请单独拨动一根弦' : '请拨动琴弦' }}
+      <span v-if="isInTune">In tune</span>
+      <span v-else-if="currentCents > 0">Too high — loosen</span>
+      <span v-else>Too low — tighten</span>
     </div>
 
     <!-- 帮助弹窗 -->
     <div v-if="showHelp" class="modal-overlay" @click="showHelp = false">
       <div class="modal-content" @click.stop>
-        <h3>调音帮助</h3>
-        <p>1. 点击编号选中要调的弦</p>
-        <p>2. 点击音名更改该弦的音高</p>
-        <p>3. 弹奏该弦，观察仪表</p>
-        <button @click="showHelp = false">知道了</button>
+        <h3>Tuning help</h3>
+        <p>1. Tap a number to select a string</p>
+        <p>2. Tap the note name to change the pitch</p>
+        <p>3. Pluck the string and watch the meter</p>
+        <button @click="showHelp = false">Got it</button>
       </div>
     </div>
 
     <!-- 设置弹窗 -->
     <div v-if="showSettings" class="modal-overlay" @click="showSettings = false">
       <div class="modal-content" @click.stop>
-        <h3>调音设置</h3>
+        <h3>Settings</h3>
         <div class="setting-row">
           <span>标准音高</span>
           <select v-model="a4Ref">
@@ -81,18 +85,20 @@
             <option :value="443">443 Hz</option>
           </select>
         </div>
-        <button @click="showSettings = false">关闭</button>
+        <button @click="showSettings = false">Close</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import TuningMeter from '../components/TuningMeter.vue'
 import HeadstockUkulele from '../components/HeadstockUkulele.vue'
 import NotePicker from '../components/NotePicker.vue'
 import { usePitchDetector } from '../composables/usePitchDetector'
+import { useLocalPreferences } from '../composables/useLocalPreferences'
 
 const allNotes: string[] = []
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -111,36 +117,36 @@ function noteToFreq(note: string): number {
   return a4Ref.value * Math.pow(2, semitones / 12)
 }
 
-// strings[0]=1弦, strings[1]=2弦, strings[2]=3弦, strings[3]=4弦
 const strings = ref([
-  { note: 'A4' },  // 1弦
-  { note: 'E4' },  // 2弦
-  { note: 'C4' },  // 3弦
-  { note: 'G4' },  // 4弦
+  { note: 'A4' }, { note: 'E4' }, { note: 'C4' }, { note: 'G4' },
 ])
 
 const stringNotes = computed(() => strings.value.map(s => s.note))
-
-const selectedIdx = ref(0)  // 0=1弦, 3=4弦
-const pickerPeg = ref(0)    // 0=没有弹窗, 1-4=对应弦
-const autoMode = ref(true)
-const a4Ref = ref(440)
+const selectedIdx = ref(0)
+const pickerPeg = ref(0)
 const showHelp = ref(false)
 const showSettings = ref(false)
 
-const { isListening, pitchData, detectionState, start, stop, setInstrument, setTargetFrequency } = usePitchDetector()
+// 本地偏好
+const { preferences, updatePreferences } = useLocalPreferences()
+const a4Ref = ref(preferences.value.a4Reference)
+const autoMode = ref(preferences.value.autoSelectString)
 
-// 初始化乐器类型
+const { isListening, pitchData, micError, start, stop, setInstrument, toggleVoice, voiceEnabled } = usePitchDetector()
 setInstrument('ukulele')
+
+onMounted(() => {
+  toggleVoice(preferences.value.voiceEnabled)
+  if (autoMode.value) start()
+})
+
+watch(a4Ref, (v) => updatePreferences({ a4Reference: v as 440 | 442 | 443 }))
+watch(voiceEnabled, (v) => updatePreferences({ voiceEnabled: v }))
 
 const activePeg = computed(() => selectedIdx.value + 1)
 const currentString = computed(() => strings.value[selectedIdx.value])
 const currentNoteLabel = computed(() => currentString.value?.note || '--')
 const currentFreqLabel = computed(() => currentString.value ? noteToFreq(currentString.value.note).toFixed(1) : '--')
-
-watch([currentString, a4Ref], () => {
-  if (currentString.value) setTargetFrequency(noteToFreq(currentString.value.note))
-}, { immediate: true })
 
 const currentCents = computed(() => {
   if (!pitchData.value.frequency || !currentString.value) return 0
@@ -165,6 +171,10 @@ function onPickerChange(note: string) {
   }
 }
 
+function onTryAgain() {
+  start()
+}
+
 // 音准后自动跳下一弦 (4→3→2→1)
 let advanceTimer: ReturnType<typeof setTimeout> | null = null
 watch(isInTune, (tuned) => {
@@ -185,9 +195,10 @@ watch(() => pitchData.value.frequency, (freq) => {
   if (bestCents < 100) selectedIdx.value = bestIdx
 })
 
-if (autoMode.value) start()
-
-onBeforeUnmount(stop)
+// 离开页面释放麦克风
+onBeforeRouteLeave(() => {
+  stop()
+})
 </script>
 
 <style scoped>
@@ -220,6 +231,30 @@ onBeforeUnmount(stop)
   color: #ccc; font-size: 14px;
   cursor: pointer;
 }
+
+.mic-error-card {
+  background: #1a1a2e;
+  border: 1.5px solid #314050;
+  border-radius: 16px;
+  padding: 24px 20px;
+  margin: 16px;
+  text-align: center;
+  max-width: 360px;
+}
+.mic-error-title {
+  font-size: 17px; font-weight: 600; margin: 0 0 12px; color: #F8FAFC;
+}
+.mic-error-desc {
+  font-size: 15px; color: #B8C2CC; margin: 0 0 20px; line-height: 1.45;
+}
+.mic-error-btn {
+  padding: 12px 32px;
+  background: #E7B65C; color: #1A222C;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background 150ms;
+}
+.mic-error-btn:hover { background: #C98B32; }
 
 .string-info {
   text-align: center;
