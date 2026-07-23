@@ -19,11 +19,11 @@ func main() {
 
 	// 创建 Gin 引擎
 	r := gin.Default()
-	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.CORSMiddleware(cfg.CORSOrigins))
 
 	// Handlers
 	authH := handlers.NewAuthHandler(db)
-	payH := handlers.NewPaymentHandler(db)
+	payH := handlers.NewPaymentHandler(db, cfg.PaymentsEnabled)
 
 	// ===== 公开路由 =====
 	api := r.Group("/api")

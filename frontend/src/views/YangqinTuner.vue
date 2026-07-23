@@ -8,6 +8,9 @@
 
     <!-- 调音仪表盘 -->
     <TunerGauge :cents="currentCents" :in-tune="isInTune" :active="!!pitchData.frequency" />
+    <p v-if="isListening && !pitchData.frequency" class="signal-status">
+      {{ detectionState === 'waiting' ? '正在等待声音稳定…' : detectionState === 'unstable' ? '声音不稳定，请单独敲击一根弦' : '请敲击或拨动琴弦' }}
+    </p>
 
     <!-- 音高信息面板 -->
     <div class="info-panel">
@@ -107,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import TunerGauge from '../components/TunerGauge.vue'
 import {
   YANGQIN_STRINGS,
@@ -163,7 +166,12 @@ const targetFreq = computed(() => {
 })
 
 // 音高检测
-const { isListening, pitchData, volume, start, stop } = usePitchDetector()
+const { isListening, pitchData, volume, detectionState, start, stop, setInstrument, setTargetFrequency } = usePitchDetector()
+
+setInstrument('yangqin')
+watch(targetString, (string) => {
+  setTargetFrequency(string?.frequency ?? 0)
+}, { immediate: true })
 
 const currentNote = computed(() => pitchData.value.note || '--')
 const currentFreq = computed(() => {
@@ -215,6 +223,8 @@ function toggleMic() {
   if (isListening.value) stop()
   else start()
 }
+
+onBeforeUnmount(stop)
 </script>
 
 <style scoped>
@@ -439,6 +449,13 @@ function toggleMic() {
   background: linear-gradient(90deg, #8B6914, #c0392b);
   border-radius: 2px;
   transition: width 0.05s;
+}
+.signal-status {
+  min-height: 20px;
+  margin: -4px 0 8px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
 }
 
 /* 帮助弹窗 */

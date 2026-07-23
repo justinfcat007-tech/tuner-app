@@ -1,164 +1,170 @@
 <template>
-  <div class="instrument-select-page">
+  <div class="tuner-home">
     <!-- Header -->
-    <header class="header">
-      <h1 class="title">🎶 调音器</h1>
-      <div class="header-right">
-        <router-link to="/vip" class="vip-badge" v-if="userInfo">
-          <span v-if="userInfo.vip_level > 0" class="vip-tag">VIP{{ userInfo.vip_level }}</span>
-          <span v-else class="vip-tag free">升级VIP</span>
-        </router-link>
-        <span class="username" v-if="userInfo">{{ userInfo.nickname || userInfo.username }}</span>
-      </div>
+    <header class="home-header">
+      <h1 class="home-brand">TUNER</h1>
+      <ProBadge compact />
     </header>
 
-    <!-- 乐器选择卡片 -->
+    <p class="home-tagline">Tune with confidence, anywhere.</p>
+
+    <!-- Instrument cards -->
     <div class="instrument-cards">
-      <router-link to="/yangqin" class="inst-card yangqin">
-        <span class="inst-emoji">🎵</span>
-        <span class="inst-name">扬琴</span>
-        <span class="inst-name-en">Yangqin</span>
+      <router-link to="/guitar" class="inst-card" @click="onInstrumentSelect('guitar')">
+        <div class="inst-info">
+          <span class="inst-name">Guitar</span>
+          <span class="inst-tuning">Standard tuning</span>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
       </router-link>
-      <router-link to="/guitar" class="inst-card guitar">
-        <span class="inst-emoji"></span>
-        <span class="inst-name">吉他</span>
-        <span class="inst-name-en">Guitar</span>
+      <router-link to="/ukulele" class="inst-card" @click="onInstrumentSelect('ukulele')">
+        <div class="inst-info">
+          <span class="inst-name">Ukulele</span>
+          <span class="inst-tuning">G – C – E – A</span>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
       </router-link>
-      <router-link to="/ukulele" class="inst-card ukulele">
-        <span class="inst-emoji">🪕</span>
-        <span class="inst-name">尤克里里</span>
-        <span class="inst-name-en">Ukulele</span>
+      <router-link to="/yangqin" class="inst-card" @click="onInstrumentSelect('yangqin')">
+        <div class="inst-info">
+          <span class="inst-name">Yangqin</span>
+          <span class="inst-tuning">Explore</span>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
       </router-link>
     </div>
 
-    <footer class="footer">
-      <p>基于 Web Audio API · 自动检测音高</p>
-    </footer>
+    <!-- Pro entry card (free users only) -->
+    <div class="pro-entry-card" @click="$router.push('/pro')">
+      <p class="pro-entry-text">
+        More instruments &amp; custom tunings are available in Pro.
+      </p>
+      <span class="pro-entry-cta">Explore Pro</span>
+    </div>
+
+    <!-- Tuning Library entry -->
+    <router-link to="/tuning-library" class="lib-entry">
+      <span>More tunings</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </router-link>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import type { UserInfo } from '../api'
+import { onMounted } from 'vue'
+import ProBadge from '../components/ProBadge.vue'
+import { track } from '../utils/analytics'
 
-const userInfo = ref<UserInfo | null>(null)
+function onInstrumentSelect(instrument: string) {
+  track('pro_entry_viewed', { source: `home_${instrument}` })
+}
 
 onMounted(() => {
-  const u = localStorage.getItem('user')
-  if (u) userInfo.value = JSON.parse(u)
+  track('pro_entry_viewed', { source: 'home' })
 })
 </script>
 
 <style scoped>
-.instrument-select-page {
-  padding: 20px 16px;
+.tuner-home {
+  background: var(--color-canvas, #10151D);
   min-height: 100vh;
+  color: var(--color-text-primary, #F8FAFC);
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
 }
-
-.header {
+.home-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 8px;
 }
-
-.title {
-  font-size: 24px;
+.home-brand {
+  font-family: var(--font-display, Georgia);
+  font-size: var(--size-title, 24px);
   font-weight: 700;
-  color: #333;
   margin: 0;
+  letter-spacing: 2px;
 }
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.home-tagline {
+  font-size: var(--size-body, 15px);
+  color: var(--color-text-secondary, #B8C2CC);
+  margin: 0 0 24px;
 }
-
-.vip-badge { text-decoration: none; }
-
-.vip-tag {
-  padding: 4px 10px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #fff;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.vip-tag.free {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-}
-
-.username {
-  color: #999;
-  font-size: 14px;
-}
-
 .instrument-cards {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
-
 .inst-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  border-radius: 16px;
+  justify-content: space-between;
+  padding: 18px 20px;
+  background: var(--color-surface, #18212C);
+  border: 1.5px solid var(--color-border, #314050);
+  border-radius: var(--radius-md, 16px);
   text-decoration: none;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  color: var(--color-text-primary, #F8FAFC);
+  transition: all var(--motion-fast, 150ms) var(--motion-easing);
 }
-
 .inst-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  border-color: var(--color-border-strong, #4A5D70);
+  background: var(--color-surface-raised, #202C39);
 }
+.inst-info { display: flex; flex-direction: column; gap: 2px; }
+.inst-name { font-size: var(--size-body-large, 17px); font-weight: 600; }
+.inst-tuning { font-size: var(--size-caption, 12px); color: var(--color-text-muted, #7F8A96); }
 
-.inst-card.yangqin {
-  background: linear-gradient(135deg, #f5f0e8, #ede5d8);
-  border: 1px solid #e0d5c5;
-}
-
-.inst-card.guitar {
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  border: 1px solid #2a2a4a;
-}
-
-.inst-card.ukulele {
-  background: linear-gradient(135deg, #f0f4ff, #e8eeff);
-  border: 1px solid #d0d8f0;
-}
-
-.inst-emoji {
-  font-size: 36px;
-}
-
-.inst-name {
-  font-size: 20px;
-  font-weight: 700;
-  flex: 1;
-}
-
-.inst-card.yangqin .inst-name { color: #5a4010; }
-.inst-card.guitar .inst-name { color: #fff; }
-.inst-card.ukulele .inst-name { color: #333; }
-
-.inst-name-en {
-  font-size: 13px;
-}
-
-.inst-card.yangqin .inst-name-en { color: #a08030; }
-.inst-card.guitar .inst-name-en { color: #888; }
-.inst-card.ukulele .inst-name-en { color: #8888bb; }
-
-.footer {
-  text-align: center;
-  margin-top: 40px;
+.pro-entry-card {
+  background: var(--color-surface-warm, #F7F0E3);
+  border-radius: var(--radius-md, 16px);
   padding: 20px;
-  color: #bbb;
-  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: transform var(--motion-fast, 150ms);
+  margin-bottom: 16px;
+}
+.pro-entry-card:hover { transform: translateY(-1px); }
+.pro-entry-text {
+  font-size: var(--size-body, 15px);
+  color: var(--color-ink, #1A222C);
+  margin: 0;
+  line-height: var(--lh-normal, 1.45);
+}
+.pro-entry-cta {
+  font-size: var(--size-body, 15px);
+  font-weight: 700;
+  color: var(--color-accent-strong, #C98B32);
+  white-space: nowrap;
+}
+
+.lib-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--color-surface, #18212C);
+  border: 1.5px solid var(--color-border, #314050);
+  border-radius: var(--radius-sm, 10px);
+  text-decoration: none;
+  color: var(--color-text-secondary, #B8C2CC);
+  font-size: var(--size-body, 15px);
+  transition: all var(--motion-fast, 150ms);
+}
+.lib-entry:hover {
+  border-color: var(--color-border-strong, #4A5D70);
+  color: var(--color-text-primary, #F8FAFC);
 }
 </style>

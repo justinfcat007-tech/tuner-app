@@ -12,27 +12,28 @@ import (
 )
 
 type PaymentHandler struct {
-	DB *gorm.DB
+	DB              *gorm.DB
+	PaymentsEnabled bool
 }
 
-func NewPaymentHandler(db *gorm.DB) *PaymentHandler {
-	return &PaymentHandler{DB: db}
+func NewPaymentHandler(db *gorm.DB, paymentsEnabled bool) *PaymentHandler {
+	return &PaymentHandler{DB: db, PaymentsEnabled: paymentsEnabled}
 }
 
 // 商品定义
 type Product struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Amount    int    `json:"amount"`    // 金额(分)
-	VIPLevel  int    `json:"vip_level"` // 1=基础VIP, 2=高级VIP
-	VIPDays   int    `json:"vip_days"`  // 0=永久
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Amount   int    `json:"amount"`    // 金额(分)
+	VIPLevel int    `json:"vip_level"` // 1=基础VIP, 2=高级VIP
+	VIPDays  int    `json:"vip_days"`  // 0=永久
 }
 
 var products = map[string]Product{
-	"vip_monthly":  {ID: "vip_monthly", Name: "基础VIP - 月卡", Amount: 1900, VIPLevel: 1, VIPDays: 30},
+	"vip_monthly":   {ID: "vip_monthly", Name: "基础VIP - 月卡", Amount: 1900, VIPLevel: 1, VIPDays: 30},
 	"vip_quarterly": {ID: "vip_quarterly", Name: "基础VIP - 季卡", Amount: 4900, VIPLevel: 1, VIPDays: 90},
-	"vip_yearly":   {ID: "vip_yearly", Name: "高级VIP - 年卡", Amount: 9900, VIPLevel: 2, VIPDays: 365},
-	"vip_lifetime": {ID: "vip_lifetime", Name: "高级VIP - 终身", Amount: 29900, VIPLevel: 2, VIPDays: 0},
+	"vip_yearly":    {ID: "vip_yearly", Name: "高级VIP - 年卡", Amount: 9900, VIPLevel: 2, VIPDays: 365},
+	"vip_lifetime":  {ID: "vip_lifetime", Name: "高级VIP - 终身", Amount: 29900, VIPLevel: 2, VIPDays: 0},
 }
 
 // GetProducts 获取商品列表
@@ -46,6 +47,10 @@ func (h *PaymentHandler) GetProducts(c *gin.Context) {
 
 // CreateOrder 创建支付订单
 func (h *PaymentHandler) CreateOrder(c *gin.Context) {
+	if !h.PaymentsEnabled {
+		c.JSON(http.StatusServiceUnavailable, models.APIResponse{Code: 503, Message: "支付功能暂未开放"})
+		return
+	}
 	var req models.CreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, models.APIResponse{Code: 400, Message: "参数错误"})
@@ -105,6 +110,10 @@ func (h *PaymentHandler) OrderList(c *gin.Context) {
 // PayCallback 支付回调 (模拟)
 // 实际生产中需对接支付宝/微信支付的回调验签
 func (h *PaymentHandler) PayCallback(c *gin.Context) {
+	if !h.PaymentsEnabled {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	orderNo := c.Query("order_no")
 	if orderNo == "" {
 		c.JSON(http.StatusBadRequest, models.APIResponse{Code: 400, Message: "缺少order_no"})

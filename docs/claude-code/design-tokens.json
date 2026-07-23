@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "name": "Warm Acoustic Precision",
+    "version": "1.0.0",
+    "target": "mobile web and Capacitor Android"
+  },
+  "color": {
+    "canvas": "#10151D",
+    "surface": "#18212C",
+    "surfaceRaised": "#202C39",
+    "surfaceWarm": "#F7F0E3",
+    "textPrimary": "#F8FAFC",
+    "textSecondary": "#B8C2CC",
+    "textMuted": "#7F8A96",
+    "ink": "#1A222C",
+    "accent": "#E7B65C",
+    "accentStrong": "#C98B32",
+    "accentSoft": "#F8E1B3",
+    "success": "#63C79A",
+    "warning": "#EEB45B",
+    "danger": "#E97979",
+    "border": "#314050",
+    "borderStrong": "#4A5D70",
+    "overlay": "rgba(5, 10, 16, 0.48)"
+  },
+  "font": {
+    "sans": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "display": "Georgia, 'Times New Roman', serif",
+    "size": {
+      "caption": "12px",
+      "body": "15px",
+      "bodyLarge": "17px",
+      "title": "24px",
+      "display": "34px"
+    },
+    "lineHeight": {
+      "tight": "1.15",
+      "normal": "1.45",
+      "relaxed": "1.6"
+    }
+  },
+  "spacing": {
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "8": "32px",
+    "10": "40px",
+    "12": "48px"
+  },
+  "radius": {
+    "sm": "10px",
+    "md": "16px",
+    "lg": "24px",
+    "pill": "999px"
+  },
+  "shadow": {
+    "card": "0 8px 24px rgba(0, 0, 0, 0.20)",
+    "sheet": "0 -12px 40px rgba(0, 0, 0, 0.32)"
+  },
+  "motion": {
+    "fast": "150ms",
+    "normal": "220ms",
+    "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+  }
+}

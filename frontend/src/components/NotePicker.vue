@@ -1,5 +1,5 @@
 <template>
-  <div class="note-picker" ref="containerRef">
+  <div class="note-picker">
     <div class="picker-track" ref="trackRef" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd" @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp" @mouseleave="onMouseUp">
       <div
         v-for="(note, i) in notes"
@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 
 const props = defineProps<{
   notes: string[]
@@ -27,7 +27,6 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const containerRef = ref<HTMLElement>()
 const trackRef = ref<HTMLElement>()
 const itemRefs: Record<number, HTMLElement> = {}
 const activeIndex = ref(0)

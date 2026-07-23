@@ -54,6 +54,9 @@
       <span v-else-if="currentCents > 0">偏高 ↓ 松弦</span>
       <span v-else>偏低 ↑ 紧弦</span>
     </div>
+    <div v-else-if="isListening" class="signal-status">
+      {{ detectionState === 'waiting' ? '正在等待声音稳定…' : detectionState === 'unstable' ? '声音不稳定，请单独拨动一根弦' : '请拨动琴弦' }}
+    </div>
 
     <!-- 帮助弹窗 -->
     <div v-if="showHelp" class="modal-overlay" @click="showHelp = false">
@@ -92,26 +95,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import TuningMeter from '../components/TuningMeter.vue'
 import HeadstockGuitar from '../components/HeadstockGuitar.vue'
 import NotePicker from '../components/NotePicker.vue'
 import { usePitchDetector } from '../composables/usePitchDetector'
 
 const allNotes: string[] = []
-const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+// 同时提供升、降号及少见的等音拼写，方便处理特殊/非标准调弦。
+const noteNames = [
+  'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'E#', 'Fb', 'F', 'F#', 'Gb',
+  'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B', 'B#', 'Cb',
+]
 for (let oct = 2; oct <= 4; oct++) {
   for (const n of noteNames) allNotes.push(`${n}${oct}`)
 }
 
 function noteToFreq(note: string): number {
-  const match = note.match(/^([A-G]#?)(\d)$/)
+  const match = note.match(/^([A-G])([#b♯♭]?)(\d+)$/)
   if (!match) return 440
-  const semitoneMap: Record<string, number> = {
-    'C': -9, 'C#': -8, 'D': -7, 'D#': -6, 'E': -5,
-    'F': -4, 'F#': -3, 'G': -2, 'G#': -1, 'A': 0, 'A#': 1, 'B': 2,
+  const naturalSemitones: Record<string, number> = {
+    C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2,
   }
-  const semitones = (parseInt(match[2]) - 4) * 12 + (semitoneMap[match[1]] ?? 0)
+  const accidental = match[2]
+  const accidentalOffset = accidental === '#' || accidental === '♯' ? 1 : accidental === 'b' || accidental === '♭' ? -1 : 0
+  const semitones = (parseInt(match[3], 10) - 4) * 12 + (naturalSemitones[match[1]] ?? 0) + accidentalOffset
   return a4Ref.value * Math.pow(2, semitones / 12)
 }
 
@@ -134,7 +142,7 @@ const a4Ref = ref(440)
 const showHelp = ref(false)
 const showSettings = ref(false)
 
-const { isListening, pitchData, start, stop, setInstrument, toggleVoice, voiceEnabled } = usePitchDetector()
+const { isListening, pitchData, detectionState, start, stop, setInstrument, setTargetFrequency, toggleVoice, voiceEnabled } = usePitchDetector()
 
 // 初始化乐器类型
 setInstrument('guitar')
@@ -143,6 +151,10 @@ const activePeg = computed(() => selectedIdx.value + 1)
 const currentString = computed(() => strings.value[selectedIdx.value])
 const currentNoteLabel = computed(() => currentString.value?.note || '--')
 const currentFreqLabel = computed(() => currentString.value ? noteToFreq(currentString.value.note).toFixed(1) : '--')
+
+watch([currentString, a4Ref], () => {
+  if (currentString.value) setTargetFrequency(noteToFreq(currentString.value.note))
+}, { immediate: true })
 
 const currentCents = computed(() => {
   if (!pitchData.value.frequency || !currentString.value) return 0
@@ -188,6 +200,8 @@ watch(() => pitchData.value.frequency, (freq) => {
 })
 
 if (autoMode.value) start()
+
+onBeforeUnmount(stop)
 </script>
 
 <style scoped>
@@ -306,6 +320,7 @@ if (autoMode.value) start()
 }
 .tune-status.in-tune { color: #4ade80; }
 .tune-status.off-tune { color: #f87171; }
+.signal-status { min-height: 43px; padding: 12px; color: #9ca3af; font-size: 14px; }
 
 .modal-overlay {
   position: fixed; inset: 0;

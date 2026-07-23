@@ -31,9 +31,25 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/pro',
+    name: 'Pro',
+    component: () => import('../views/ProView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/vip',
-    name: 'VIP',
-    component: () => import('../views/VIPView.vue'),
+    redirect: '/pro',
+  },
+  {
+    path: '/tuning-library',
+    name: 'TuningLibrary',
+    component: () => import('../views/TuningLibraryView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/ProfileView.vue'),
     meta: { requiresAuth: true },
   },
   {

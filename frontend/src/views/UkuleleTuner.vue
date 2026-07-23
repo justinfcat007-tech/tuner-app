@@ -54,6 +54,9 @@
       <span v-else-if="currentCents > 0">偏高 ↓ 松弦</span>
       <span v-else>偏低 ↑ 紧弦</span>
     </div>
+    <div v-else-if="isListening" class="signal-status">
+      {{ detectionState === 'waiting' ? '正在等待声音稳定…' : detectionState === 'unstable' ? '声音不稳定，请单独拨动一根弦' : '请拨动琴弦' }}
+    </div>
 
     <!-- 帮助弹窗 -->
     <div v-if="showHelp" class="modal-overlay" @click="showHelp = false">
@@ -85,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import TuningMeter from '../components/TuningMeter.vue'
 import HeadstockUkulele from '../components/HeadstockUkulele.vue'
 import NotePicker from '../components/NotePicker.vue'
@@ -125,7 +128,7 @@ const a4Ref = ref(440)
 const showHelp = ref(false)
 const showSettings = ref(false)
 
-const { isListening, pitchData, start, stop, setInstrument, toggleVoice, voiceEnabled } = usePitchDetector()
+const { isListening, pitchData, detectionState, start, stop, setInstrument, setTargetFrequency } = usePitchDetector()
 
 // 初始化乐器类型
 setInstrument('ukulele')
@@ -134,6 +137,10 @@ const activePeg = computed(() => selectedIdx.value + 1)
 const currentString = computed(() => strings.value[selectedIdx.value])
 const currentNoteLabel = computed(() => currentString.value?.note || '--')
 const currentFreqLabel = computed(() => currentString.value ? noteToFreq(currentString.value.note).toFixed(1) : '--')
+
+watch([currentString, a4Ref], () => {
+  if (currentString.value) setTargetFrequency(noteToFreq(currentString.value.note))
+}, { immediate: true })
 
 const currentCents = computed(() => {
   if (!pitchData.value.frequency || !currentString.value) return 0
@@ -179,6 +186,8 @@ watch(() => pitchData.value.frequency, (freq) => {
 })
 
 if (autoMode.value) start()
+
+onBeforeUnmount(stop)
 </script>
 
 <style scoped>
@@ -297,6 +306,7 @@ if (autoMode.value) start()
 }
 .tune-status.in-tune { color: #4ade80; }
 .tune-status.off-tune { color: #f87171; }
+.signal-status { min-height: 43px; padding: 12px; color: #9ca3af; font-size: 14px; }
 
 .modal-overlay {
   position: fixed; inset: 0;
