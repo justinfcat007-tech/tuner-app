@@ -1,44 +1,225 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/audio/audio_engine.dart';
+import '../../../shared/models/tunings.dart';
+import '../../tuner/presentation/widgets/tuning_meter.dart';
+import 'widgets/guitar_headstock.dart';
 
-/// Guitar tuner screen - placeholder
-class GuitarTunerScreen extends StatelessWidget {
+/// Guitar tuner screen
+class GuitarTunerScreen extends ConsumerStatefulWidget {
   const GuitarTunerScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          TextButton(onPressed: () {}, child: const Text('Help')),
-          TextButton(onPressed: () {}, child: const Text('Settings')),
-        ],
+  ConsumerState<GuitarTunerScreen> createState() => _GuitarTunerScreenState();
+}
+
+class _GuitarTunerScreenState extends ConsumerState<GuitarTunerScreen> {
+  int _selectedString = 0; // 0-5 (E4, B3, G3, D3, A2, E2)
+  bool _autoMode = false;
+  double _a4Reference = 440.0;
+
+  // Simulated pitch result (will be replaced with actual audio engine)
+  final PitchResult _pitchResult = PitchResult.empty();
+
+  List<String> get _stringNotes => guitar.strings.map((s) => s.note).toList();
+
+  void _onPegSelected(int peg) {
+    setState(() {
+      _selectedString = peg - 1;
+      _autoMode = false;
+    });
+  }
+
+  void _onNoteChange(int peg) {
+    // TODO: Show note picker dialog
+    setState(() {
+      _selectedString = peg - 1;
+    });
+  }
+
+  void _showSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      body: Center(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.music_note, size: 64, color: AppTheme.accent),
-            const SizedBox(height: 16),
             Text(
-              'Guitar Tuner',
+              'Settings',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textPrimary,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming soon',
-              style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'A4 Reference',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                ),
+                DropdownButton<double>(
+                  value: _a4Reference,
+                  dropdownColor: AppTheme.surface,
+                  items: [440.0, 442.0, 443.0].map((freq) {
+                    return DropdownMenuItem(
+                      value: freq,
+                      child: Text('${freq.toInt()} Hz'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _a4Reference = value;
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Auto Mode',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                ),
+                Switch(
+                  value: _autoMode,
+                  activeColor: AppTheme.accent,
+                  onChanged: (value) {
+                    setState(() {
+                      _autoMode = value;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final targetFrequency = guitar.strings[_selectedString].frequency;
+    final targetNote = guitar.strings[_selectedString].note;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppTheme.canvas,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            size: 20,
+            color: AppTheme.textPrimary,
+          ),
+          onPressed: () => context.pop(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              // TODO: Show help dialog
+            },
+            child: Text(
+              'Help',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: _showSettings,
+            child: Text(
+              'Settings',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Tuning meter
+              TuningMeter(
+                cents: _pitchResult.cents,
+                state: AudioEngineState.idle,
+              ),
+              const SizedBox(height: 24),
+
+              // Note display
+              NoteDisplay(
+                note: _pitchResult.frequency > 0
+                    ? _pitchResult.note
+                    : targetNote,
+                frequency: _pitchResult.frequency > 0
+                    ? _pitchResult.frequency
+                    : targetFrequency,
+                inTune: _pitchResult.inTune,
+              ),
+              const SizedBox(height: 16),
+
+              // Status indicator
+              StatusIndicator(
+                inTune: _pitchResult.inTune,
+                tooHigh: _pitchResult.tooHigh,
+                tooLow: _pitchResult.tooLow,
+              ),
+              const SizedBox(height: 32),
+
+              // Guitar headstock
+              Expanded(
+                child: Center(
+                  child: GuitarHeadstock(
+                    activePeg: _selectedString + 1,
+                    stringNotes: _stringNotes,
+                    onPegSelected: _onPegSelected,
+                    onNoteChange: _onNoteChange,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Auto mode toggle
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Auto',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Switch(
+                    value: _autoMode,
+                    activeColor: AppTheme.accent,
+                    onChanged: (value) {
+                      setState(() {
+                        _autoMode = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
