@@ -142,7 +142,7 @@ const { preferences, updatePreferences } = useLocalPreferences()
 const a4Ref = ref(preferences.value.a4Reference)
 const autoMode = ref(preferences.value.autoSelectString)
 
-const { isListening, pitchData, micError, start, stop, setInstrument, toggleVoice, voiceEnabled } = usePitchDetector()
+const { isListening, pitchData, micError, start, stop, setInstrument, toggleVoice, voiceEnabled, requestMicPermission } = usePitchDetector()
 setInstrument('guitar')
 
 // 从本地偏好初始化语音
@@ -181,8 +181,13 @@ function onVoiceChange(e: Event) {
   toggleVoice(val)
 }
 
-function onTryAgain() {
-  start()
+async function onTryAgain() {
+  const ok = await requestMicPermission()
+  if (ok) {
+    start()
+  } else {
+    micError.value = 'denied'
+  }
 }
 
 function onSelectPeg(num: number) {

@@ -227,6 +227,22 @@ export function usePitchDetector() {
     lowPassFilter.frequency.setTargetAtTime(Math.min(audioContext.sampleRate / 2 - 100, maximum * 1.2), audioContext.currentTime, 0.03)
   }
 
+  async function requestMicPermission(): Promise<boolean> {
+    try {
+      const result = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+      if (result.state === 'denied') return false
+    } catch {
+      // permissions API not supported, proceed to getUserMedia
+    }
+    try {
+      const testStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      testStream.getTracks().forEach(t => t.stop())
+      return true
+    } catch {
+      return false
+    }
+  }
+
   async function start() {
     if (isListening.value) return
     micError.value = null
@@ -308,6 +324,6 @@ export function usePitchDetector() {
 
   return {
     isListening, pitchData, volume, instrument, voiceEnabled, detectionState, tuneStatus, micError,
-    start, stop, setInstrument, setTargetFrequency, toggleVoice,
+    start, stop, setInstrument, setTargetFrequency, toggleVoice, requestMicPermission,
   }
 }

@@ -132,7 +132,7 @@ const { preferences, updatePreferences } = useLocalPreferences()
 const a4Ref = ref(preferences.value.a4Reference)
 const autoMode = ref(preferences.value.autoSelectString)
 
-const { isListening, pitchData, micError, start, stop, setInstrument, toggleVoice, voiceEnabled } = usePitchDetector()
+const { isListening, pitchData, micError, start, stop, setInstrument, toggleVoice, voiceEnabled, requestMicPermission } = usePitchDetector()
 setInstrument('ukulele')
 
 onMounted(() => {
@@ -171,8 +171,13 @@ function onPickerChange(note: string) {
   }
 }
 
-function onTryAgain() {
-  start()
+async function onTryAgain() {
+  const ok = await requestMicPermission()
+  if (ok) {
+    start()
+  } else {
+    micError.value = 'denied'
+  }
 }
 
 // 音准后自动跳下一弦 (4→3→2→1)

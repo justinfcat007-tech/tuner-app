@@ -174,15 +174,20 @@ const targetFreq = computed(() => {
 })
 
 // 音高检测
-const { isListening, pitchData, volume, detectionState, micError, start, stop, setInstrument, setTargetFrequency } = usePitchDetector()
+const { isListening, pitchData, volume, detectionState, micError, start, stop, setInstrument, setTargetFrequency, requestMicPermission } = usePitchDetector()
 
 setInstrument('yangqin')
 watch(targetString, (string) => {
   setTargetFrequency(string?.frequency ?? 0)
 }, { immediate: true })
 
-function onTryAgain() {
-  start()
+async function onTryAgain() {
+  const ok = await requestMicPermission()
+  if (ok) {
+    start()
+  } else {
+    micError.value = 'denied'
+  }
 }
 
 const currentNote = computed(() => pitchData.value.note || '--')
