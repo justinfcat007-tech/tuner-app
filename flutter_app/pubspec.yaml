@@ -1,0 +1,45 @@
+name: tuner_app
+description: "Tuner App - Guitar, Ukulele, Yangqin Tuner"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Routing
+  go_router: ^14.8.0
+
+  # Network
+  dio: ^5.7.0
+
+  # Storage
+  shared_preferences: ^2.3.5
+  flutter_secure_storage: ^9.2.4
+
+  # Audio (native implementation)
+  permission_handler: ^11.3.1
+
+  # JSON Serialization
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  json_serializable: ^6.9.2
+  riverpod_generator: ^2.6.3
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
